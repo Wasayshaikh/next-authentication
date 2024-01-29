@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
 export default function SignIn() {
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
   });
-
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const handleChange = (e) => {
     const { name, value } = e.target;
     setCredentials((prevCredentials) => ({
@@ -19,16 +21,22 @@ export default function SignIn() {
     e.preventDefault();
 
     try {
-      await signIn('credentials', {
-        redirect: true,
-        username: credentials.username,
-        password: credentials.password,
-      });
-      console.log("first")
-    } catch (error) {
-      console.error('Authentication failed:', error);
-    }
-  };
+        const result = await signIn('credentials', {
+          redirect: false,
+          username: credentials.username,
+          password: credentials.password,
+        });
+  
+        if (result?.error) {
+          console.error('Authentication failed:', result.error);
+        } else {
+          // Redirect to dashboard if the user is authenticated
+          router.push('/');
+        }
+      } catch (error) {
+        console.error('Authentication failed:', error);
+      }
+    };
 
   return (
     <div>
